@@ -1,6 +1,10 @@
 <script setup lang="ts">
+const supabase = useSupabase()
+const toast = useToast()
+
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: 'un-authenticated'
 })
 
 const state = reactive({
@@ -8,12 +12,41 @@ const state = reactive({
   email: '',
   password: ''
 })
+
+const submitting = ref(false)
+
+async function signUp() {
+  submitting.value = true
+  const { data, error } = await supabase.auth.signUp({
+    email: state.email,
+    password: state.password,
+    options: {
+      data: {
+        username: state.username,
+        emailRedirectTo: `${window.location.origin}/home`
+      }
+    }
+  })
+
+  if (error) {
+    toast.add({
+      title: 'Registration Failed',
+      description: error.message,
+      color: 'error'
+    })
+    submitting.value = false
+    return
+  }
+
+  navigateTo('/auth/login')
+}
 </script>
 
 <template>
   <UCard variant="subtle">
     <UForm
       :state
+      @submit.prevent="signUp"
       class="space-y-4">
         <UFormField
           label="Username"
@@ -45,7 +78,11 @@ const state = reactive({
             placeholder="Enter your password" />
         </UFormField>
 
-        <UButton type="submit" block>
+        <UButton
+          type="submit"
+          block
+          :loading="submitting"
+          :disabled="submitting">
           Register
         </UButton>
     </UForm>

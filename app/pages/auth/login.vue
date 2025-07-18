@@ -1,19 +1,46 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: 'un-authenticated'
 })
+
+const supabase = useSupabase()
+const toast = useToast()
+
+const submitting = ref(false)
 
 const state = reactive({
   email: '',
   password: ''
 })
+
+async function signIn() {
+  submitting.value = true
+  const { error } = await supabase.auth.signInWithPassword({
+    email: state.email,
+    password: state.password
+  })
+
+  if (error) {
+    toast.add({
+      title: 'Login Failed',
+      description: error.message,
+      color: 'error'
+    })
+    submitting.value = false
+    return
+  }
+
+  navigateTo('/home')
+}
 </script>
 
 <template>
   <UCard variant="subtle">
     <UForm
       :state
-      class="space-y-4">
+      class="space-y-4"
+      @submit.prevent="signIn">
       <UFormField
         label="Email"
         name="email">
@@ -42,7 +69,11 @@ const state = reactive({
 
         </UFormField>
 
-        <UButton type="submit" block>
+        <UButton
+          type="submit"
+          block
+          :loading="submitting"
+          :disabled="submitting">
           Login
         </UButton>
     </UForm>

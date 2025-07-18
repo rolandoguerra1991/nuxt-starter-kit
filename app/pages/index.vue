@@ -4,6 +4,6 @@
 
 <template>
   <div>
-    <!-- Index Page Content -->
+
   </div>
 </template>
